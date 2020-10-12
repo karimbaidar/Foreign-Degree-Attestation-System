@@ -1,0 +1,297 @@
+<?php
+
+namespace App\Http\Controllers;
+//use jdatetime;
+use App\PersonalDetail;
+//require_once 'C:\xampp\htdocs\AMC 18-04-18\AMC 26-04-18\INSEJAAM_old_2\INSEJAAM - August 3 2018 - Copy\public\jDateTime-master/jdatetime.class.php';
+//use App\jdatetime;
+	 
+use Illuminate\Support\Facades\Input;
+use Illuminate\Http\Request;
+use Mail;
+use DB;
+use Auth;
+use App\ActivityLog;
+use \Crypt;
+
+use Illuminate\Support\Facades\Session;
+class checklistController1 extends Controller
+{
+	
+	
+	public function __construct()
+    {
+        $this->middleware(['locale','auth']);
+		$this->middleware(['revalidate','auth']);
+    }
+	
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        return view('admin.setup.admin_doctor.list');
+    }
+
+
+     public function show_check_list($id)
+    { 
+	  
+	    // $id = Crypt::decrypt($id);
+		$info=PersonalDetail::where('id',$id)->get();
+	
+		$doctor_lists=PersonalDetail::all()->sortByDesc('id');
+		
+		$registred_doctor=array();
+        
+        $registred_doctor=null;
+
+
+        for($i=0;$i<count($doctor_lists);$i++){
+            if($i==0){
+                 $registred_doctor=$doctor_lists[$i];
+                 $registred_doctor[$i]=$doctor_lists[$i];
+            }else{
+                 $registred_doctor[$i]=$doctor_lists[$i];
+            }
+           
+        }
+
+		
+        $doctor=null;
+
+
+        for($i=0;$i<count($info);$i++){
+            if($i==0){
+                 $doctor=$info[$i];
+                 $doctor[$i]=$info[$i];
+            }else{
+                 $doctor[$i]=$info[$i];
+            }
+           
+        }
+
+
+       
+
+        return view('admin.setup.checklist1.create',compact('id','doctor','registred_doctor'));
+	
+	   
+
+    }
+	
+     public function send_email()
+    { 
+       Mail::send(['text'=>'mail'],['name','Sediqullah'],function($message){
+
+        $message->to('sediqullah.sadiq55@gmail.com','Ahmad khan')->subject('test email');
+        $message->from('sediqullah.sadiq55@gmail.com','Ahmad khan');
+
+       });
+    }
+
+    public function update_status(Request $request)
+    {
+		//include(app_path() . '\Http\Controllers\jDateTimemaster/jdatetime.class.php');
+	 
+       $registration_date=date("Y-m-d h:m:s");
+	   
+        //$reg_no = Input::get ( 'reg_no' );
+
+        $id=$request->reg_no;
+        
+       // $date = new jDateTime(true, true, 'Asia/Tehran');
+        $personaldetail=PersonalDetail::find($id);
+		
+           if($request->id_varification){
+            $personaldetail->id_varification=1;
+
+            if($request->police_varification){
+                 $personaldetail->police_varification=1;
+            }
+
+            if($request->document_varification){
+                $personaldetail->document_varification=1;
+            }
+            if( $request->bank_varification){
+               $personaldetail->bank_varification=1; 
+            }
+            if($request->test_varification){
+                $personaldetail->test_examination=1;
+            }
+            
+            if($request->fit_to_work){
+               $personaldetail->fit_to_work=1;
+            }
+            if($request->declaration){
+              $personaldetail->diclaration=1;  
+            }
+            if($request->approval){
+              $personaldetail->approval=1;  
+            }
+            if($request->rejection){
+
+                $personaldetail->rejection=$request->rejection;
+				$personaldetail->rejectionFlag=1;
+				$personaldetail->status="Rejected";
+            }
+			
+			 if($request->nondocument){
+
+                $personaldetail->nondocument=$request->nondocument;
+				$personaldetail->nondocumentFlag=1;
+				$personaldetail->status="Pending";
+            }
+			
+			
+	        //	$date->date("Y-m-d", false, false);
+        	//	$registration_date=date("Y-m-d h:m:s");
+            if($personaldetail->document_varification==1 && $personaldetail->bank_varification==1 && $personaldetail->test_examination==1  && $personaldetail->fit_to_work==1 && $personaldetail->diclaration==1 && $personaldetail->approval==1){
+
+               // $personaldetail->status='Approved';
+                 
+                //$personaldetail->pass='The Application is now forwarded to Technical Committee from Documents Evaluation Comittee';
+			
+               // $personaldetail->timeDuration=$registration_date;
+                
+				
+			    if($personaldetail->pass='The Application has been forwarded to Technical Committee by Documents Attestation Evaluation department.')
+				{
+					Session::flash('message','Student is Passed to Verifier Committee');
+				}
+				else if($personaldetail->rejection='Approved')
+				{
+					Session::flash('message',__('ui-list.rejectedstatushasbeenpassed'));
+				}
+				
+                
+            }
+
+            
+            
+        }
+        
+                 if($request->approval)
+                 {
+                     	$personaldetail->pass='The Application has been forwarded to Technical Committee by Documents Attestation Evaluation department.';
+                        $personaldetail->rejection='Approved';
+                        //Session::flash('message','The Application has been forwarded to Technical Committee by Documents Attestation Evaluation department.');
+                         Session::flash('message','اسناد به کمیته تخنیکی ارسال شد');
+                 }
+		
+        if($request->rejection){
+
+                $personaldetail->rejection=$request->rejection;
+				$personaldetail->rejectionFlag=1;
+				$personaldetail->status="Rejected";
+            }
+			
+			 if($request->nondocument){
+
+                $personaldetail->nondocument=$request->nondocument;
+				$personaldetail->nondocumentFlag=1;
+				$personaldetail->status="Pending";
+            }
+            
+            
+			 
+			
+		if($request->nondocument){
+        $personaldetail->pass='The Application is with Documents Evaluation Committee for Review';
+        $personaldetail->timeDuration=$registration_date;
+		
+		//$personaldetail->shamsi=$date;
+		  
+		  Session::flash('message','پیام ارسال شد');
+			
+		 }
+		//else
+	//	{
+				 
+		        //	$personaldetail->pass='The Application has been forwarded to Technical Committee by Documents Attestation Evaluation department.';
+	             //	$activity = new ActivityLog;
+		        //     $activity->description = "Passed Records of ".$personaldetail->name." at ".$registration_date." to Technical Committee ";
+	           //  	$activity->user=Auth::user()->firstName;
+		
+	            
+		
+		//	 }
+	$activity = new ActivityLog;
+	$activity->description = "Passed Records of ".$personaldetail->name." at ".$registration_date." to Technical Committee ";
+	  	$activity->user=Auth::user()->firstName;
+	  	$activity->save();
+		          //  Session::flash('message',__('ui-list.studentpassedtotechnicalcommittee'));
+	     $personaldetail->save();
+         
+      
+        return redirect('/admin_doctor');
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        //
+    }
+}

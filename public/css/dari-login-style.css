@@ -1,0 +1,8 @@
+body{text-align:right;}
+#three{margin-right:80px;}
+.gradient{right:50%;margin-right:-300px;}
+.login-form .header{padding:40px 30px 30px 30px;}
+.login-form .content{padding:0 30px 25px 30px;}
+.user-icon, .pass-icon{right:0px;padding-left:2px;}
+.content input:focus + div{right:-46px;}
+.login-form .footer{padding:25px 30px 40px 30px;}
